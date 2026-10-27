@@ -5,11 +5,11 @@ Why: running all 20 questions inside the Space is slow and starts over on any er
 Here you can test a few questions, fix the agent, and only re-run what you need.
 
 Examples:
-    python run_local.py --list                      # show the questions with their numbers
-    python run_local.py --only 3 12                 # answer questions 3 and 12
-    python run_local.py                             # answer every question not answered yet
-    python run_local.py --only 3 --force            # answer question 3 again
-    python run_local.py --submit --username <you> --space <you>/<space-name>
+    gaia-agent --list                      # show the questions with their numbers
+    gaia-agent --only 3 12                 # answer questions 3 and 12
+    gaia-agent                             # answer every question not answered yet
+    gaia-agent --only 3 --force            # answer question 3 again
+    gaia-agent --submit --username <you> --space <you>/<space-name>
 """
 
 import argparse
@@ -17,7 +17,7 @@ import json
 import sys
 from pathlib import Path
 
-import scoring_api
+from gaia_agent import scoring
 
 ANSWERS_FILE = Path("answers.json")
 
@@ -26,7 +26,10 @@ def load_answers() -> dict:
     return json.loads(ANSWERS_FILE.read_text(encoding="utf-8")) if ANSWERS_FILE.exists() else {}
 
 
-def save_answers(answers: dict) -> None:
+def save_answer(task_id: str, answer: str) -> None:
+    # Re-read the file first, so two runs at once (e.g. on different models) don't overwrite each other.
+    answers = load_answers()
+    answers[task_id] = answer
     ANSWERS_FILE.write_text(json.dumps(answers, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
@@ -42,7 +45,7 @@ def main():
     parser.add_argument("--space", help="your Space id, e.g. user/space-name (for --submit)")
     args = parser.parse_args()
 
-    questions = scoring_api.get_questions()
+    questions = scoring.get_questions()
     answers = load_answers()
 
     if args.list:
@@ -55,10 +58,10 @@ def main():
     if args.submit:
         payload = [{"task_id": task_id, "submitted_answer": answer} for task_id, answer in answers.items()]
         agent_code = f"https://huggingface.co/spaces/{args.space}/tree/main"
-        print(scoring_api.submit(args.username, agent_code, payload))
+        print(scoring.submit(args.username, agent_code, payload))
         return
 
-    from agent import GaiaAgent  # imported here so --list and --submit work without model keys
+    from gaia_agent.agent import GaiaAgent  # imported here so --list and --submit work without model keys
 
     agent = GaiaAgent()
     selected = args.only or range(1, len(questions) + 1)
@@ -74,7 +77,7 @@ def main():
             print(f"AGENT ERROR: {error}")
             continue
         answers[item["task_id"]] = answer
-        save_answers(answers)  # save after each question, so nothing is lost if a later one fails
+        save_answer(item["task_id"], answer)  # save after each question, so nothing is lost if a later one fails
         print(f"===== Answer {number}: {answer!r}")
 
     print(f"\n{len(answers)}/{len(questions)} questions answered. Saved in {ANSWERS_FILE}")

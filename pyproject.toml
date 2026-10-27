@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaia-agent"
+version = "0.1.0"
+description = "smolagents agent for the Hugging Face Agents Course Unit 4 final assignment (GAIA level 1)"
+readme = "README.md"
+requires-python = ">=3.10"
+# Keep in sync with requirements.txt, which the Hugging Face Space installs.
+dependencies = [
+    "gradio[oauth]",
+    "requests",
+    "smolagents[openai]",
+    "ddgs",
+    "markdownify",
+    "beautifulsoup4",
+    "youtube-transcript-api",
+    "huggingface_hub",
+    "pandas",
+    "openpyxl",
+    "pillow",
+]
+
+[project.scripts]
+gaia-agent = "gaia_agent.cli.run_local:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

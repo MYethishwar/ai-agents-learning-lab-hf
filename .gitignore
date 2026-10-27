@@ -4,3 +4,4 @@ __pycache__/
 downloads/
 answers.json
 *.log
+*.egg-info/
