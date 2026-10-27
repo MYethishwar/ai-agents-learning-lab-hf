@@ -1,0 +1,11 @@
+gradio[oauth]
+requests
+smolagents[openai]
+ddgs
+markdownify
+beautifulsoup4
+youtube-transcript-api
+huggingface_hub
+pandas
+openpyxl
+pillow
